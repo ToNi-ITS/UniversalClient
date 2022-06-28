@@ -5,48 +5,69 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace SocketClient.ViewModels
 {
     class MainWindowViewModel : ViewModelBase
     {
-        private int _port;
+        private string _port;
         private string server;
         private string _message;
         private ObservableCollection<string> _receivedMessages;
         public ICommand SendMessage { set; get; }
         private Task _senderTask;
 
+
+        object _lockObject = new object();
+
+
+
         public MainWindowViewModel()
         {
             SendMessage = new DelegateCommand(OnSendMessage, OnSendMessageCanExecute);
             ReceivedMessages = new ObservableCollection<string>();
+            AsynchronousClient.StatusMessage += AsynchronousClient_StatusMessage;
+            Port = "11000";
+            Server = "127.0.0.1";
+            Message = "21.87;78.20;1013.00;192.1.23.43";
 
-            Port = 11000;
-            Server = "localhost";
-            Message = "Hallo " + DateTime.Now;
+            BindingOperations.EnableCollectionSynchronization(_receivedMessages, _lockObject);
+        }
+
+        private void AsynchronousClient_StatusMessage(object sender, string e)
+        {
+            Dispatcher.CurrentDispatcher.Invoke(() =>
+            {
+                lock (_lockObject)
+                {
+                    ReceivedMessages.Add(e);
+                }
+            });
         }
 
         private void OnSendMessage(object obj)
         {
             _senderTask = Task.Run(() =>
-                AsynchronousClient.StartClient(Server, Port, Message));
+                AsynchronousClient.StartClient(Server, int.Parse(Port), Message));
 
-            ReceivedMessages.Add(Message);
+
         }
 
-        private bool OnSendMessageCanExecute(object obj)
+        public bool OnSendMessageCanExecute(object obj)
         {
-            if (Port > 1024 && !string.IsNullOrEmpty(Server) && !string.IsNullOrEmpty(Message))
+            if (Port != "" && Server != "")
                 return true;
             else
                 return false;
+
         }
 
 
 
-        public int Port
+        public string Port
         {
             get => _port;
             set
@@ -72,7 +93,7 @@ namespace SocketClient.ViewModels
             {
                 _receivedMessages = value;
                 OnPropertyChanged();
-           }
+            }
         }
 
         public string Message

@@ -11,8 +11,10 @@ namespace SocketClient
 {
     public static class AsynchronousClient
     {
+        public static event EventHandler<string> StatusMessage;
+
         // The port number for the remote device.  
-       //private const int port = 11000;
+        //private const int port = 11000;
 
         // ManualResetEvent instances signal completion.  
         private static ManualResetEvent connectDone = new ManualResetEvent(false);
@@ -21,12 +23,14 @@ namespace SocketClient
 
         // The response from the remote device.  
         private static String response = String.Empty;
+        private static String _msg = String.Empty;
 
         public static void StartClient(string server, int port, string message)
         {
             // Connect to a remote device.  
             try
             {
+                _msg = message;
                 // Establish the remote endpoint for the socket.  
                 // The name of the
                 // remote device is "host.contoso.com".  
@@ -44,20 +48,20 @@ namespace SocketClient
                 connectDone.WaitOne();
 
                 // Send test data to the remote device.  
-                Send(client, $"{message}<EOF>");
+                Send(client, $"{message}");
                 sendDone.WaitOne();
 
-                // Receive the response from the remote device.  
-                Receive(client);
-                receiveDone.WaitOne();
+                //// Receive the response from the remote device.  
+                //Receive(client);
+                //receiveDone.WaitOne();
 
-                // Write the response to the console.  
-                Console.WriteLine("Response received : {0}", response);
+                //// Write the response to the console.  
+                //Console.WriteLine("Response received : {0}", response);
 
                 // Release the socket.  
                 client.Shutdown(SocketShutdown.Both);
                 client.Close();
-                
+
 
             }
             catch (Exception e)
@@ -76,15 +80,22 @@ namespace SocketClient
                 // Complete the connection.  
                 client.EndConnect(ar);
 
-                Console.WriteLine("Socket connected to {0}",
-                    client.RemoteEndPoint.ToString());
+                if(StatusMessage != null)
+                {
+                    StatusMessage(null, $"Socket connected to {client.RemoteEndPoint.ToString()}");
+                }
+               
 
                 // Signal that the connection has been made.  
                 connectDone.Set();
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                if (StatusMessage != null)
+                {
+                    StatusMessage(null, e.ToString());
+                }
+               
             }
         }
 
@@ -102,7 +113,10 @@ namespace SocketClient
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                if (StatusMessage != null)
+                {
+                    StatusMessage(null, e.ToString());
+                }
             }
         }
 
@@ -133,6 +147,10 @@ namespace SocketClient
                     if (state.sb.Length > 1)
                     {
                         response = state.sb.ToString();
+                        if (StatusMessage != null)
+                        {
+                            StatusMessage(null, $"Received from Server: {response}");
+                        }
                     }
                     // Signal that all bytes have been received.  
                     receiveDone.Set();
@@ -140,7 +158,10 @@ namespace SocketClient
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                if (StatusMessage != null)
+                {
+                    StatusMessage(null, e.ToString());
+                }
             }
         }
 
@@ -163,17 +184,24 @@ namespace SocketClient
 
                 // Complete sending the data to the remote device.  
                 int bytesSent = client.EndSend(ar);
-                Console.WriteLine("Sent {0} bytes to server.", bytesSent);
-
+               
+                if (StatusMessage != null)
+                {
+                    StatusMessage(null, $"Sent {bytesSent} bytes to server: {_msg}");
+                    StatusMessage(null, $"EndSend");
+                }
                 // Signal that all bytes have been sent.  
                 sendDone.Set();
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                if (StatusMessage != null)
+                {
+                    StatusMessage(null, e.ToString());
+                }
             }
         }
 
-        
+
     }
 }

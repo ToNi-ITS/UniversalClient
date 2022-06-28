@@ -6,21 +6,32 @@
         xmlns:local="clr-namespace:SocketClient"
         xmlns:vm="clr-namespace:SocketClient.ViewModels"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800"
+        Title="MainWindow" Height="350" Width="400" ResizeMode="NoResize"
         >
     <Window.DataContext>
         <vm:MainWindowViewModel />
     </Window.DataContext>
     <Grid>
-        <StackPanel>
-            <TextBox Text="{Binding Server}"></TextBox>
-            <TextBox Text="{Binding Port}"></TextBox>
-            <TextBox Text="{Binding Message}"></TextBox>
-            <Button Command="{Binding SendMessage}">Senden</Button>
-            <ListView  ItemsSource="{Binding ReceivedMessages}" 
-                   VerticalContentAlignment="Top"  
-          ScrollViewer.VerticalScrollBarVisibility="Visible"
-          ScrollViewer.CanContentScroll="False"
+        <StackPanel Orientation="Vertical">
+            <StackPanel Orientation="Horizontal">
+                <Label Width="200">IP-Adresse des Servers:</Label>
+                <TextBox Text="{Binding Server}" Width="167"></TextBox>
+            </StackPanel>
+            <StackPanel  Orientation="Horizontal">
+                <Label Width="200">Port des Servers:</Label>
+                <TextBox Text="{Binding Port}" Width="167"></TextBox>
+            </StackPanel>
+            <StackPanel  >
+                <Label >Message:</Label>
+                <TextBox Text="{Binding Message}"></TextBox>
+            </StackPanel>
+            <Button Margin="5" MinHeight="20" Command="{Binding SendMessage}"
+                    >Senden</Button>
+            <Label>Gesendet:</Label>
+            <ListView Height="170" ItemsSource="{Binding ReceivedMessages}" 
+                    VerticalContentAlignment="Top"  
+                    ScrollViewer.VerticalScrollBarVisibility="Visible"
+                    ScrollViewer.CanContentScroll="False" Margin="0,0,-0.4,0"
                    ></ListView>
         </StackPanel>
     </Grid>
